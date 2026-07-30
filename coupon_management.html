@@ -154,6 +154,12 @@ tbody tr:hover td{background:#f7f9fc;}
 .cp-scenario-chip:hover{border-color:#1a3a6b;color:#1a3a6b;background:#e8edf6;}
 .cp-scenario-note{font-family:'Microsoft JhengHei',sans-serif;font-size:11px;color:#888;margin-left:4px;letter-spacing:0;}
 
+/* Toast */
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:#323232;color:#fff;font-size:13px;padding:10px 22px;border-radius:6px;opacity:0;pointer-events:none;z-index:9999;transition:opacity .2s,transform .2s;white-space:nowrap;}
+.toast.toast-success{background:#166534;}
+.toast.toast-error{background:#991b1b;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
 /* Coupon master popup */
 .popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400;align-items:center;justify-content:center;}
 .popup-overlay.open{display:flex;}
@@ -694,40 +700,6 @@ tbody tr:hover td{background:#f7f9fc;}
   </div>
 </div>
 
-<!-- Activate confirm modal -->
-<div class="modal-overlay" id="activate-modal" onclick="closeModalOverlay('activate-modal',event)">
-  <div class="modal modal-sm">
-    <button class="modal-close" onclick="closeModal('activate-modal')">✕</button>
-    <div class="modal-title">確認啟用</div>
-    <div class="modal-body-text">確定要啟用「<span id="activate-name"></span>」嗎？</div>
-    <div class="modal-warn">
-      ⚠️ 啟用後將<strong>立刻生效</strong>，系統將開始依此主檔發放優惠碼。<br/>
-      啟用後<strong>不可再編輯</strong>主檔內容，如需調整請先停用。
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('activate-modal')">取消</button>
-      <button class="btn btn-primary" onclick="confirmActivate()">確認啟用</button>
-    </div>
-  </div>
-</div>
-
-<!-- Suspend confirm modal -->
-<div class="modal-overlay" id="suspend-modal" onclick="closeModalOverlay('suspend-modal',event)">
-  <div class="modal modal-sm">
-    <button class="modal-close" onclick="closeModal('suspend-modal')">✕</button>
-    <div class="modal-title">確認停用</div>
-    <div class="modal-body-text">確定要停用「<span id="suspend-name"></span>」嗎？</div>
-    <div class="modal-warn">
-      ⚠️ 停用後，<strong>所有已發出的相關優惠碼將無法兌換</strong>。<br/>
-      停用後可隨時重新啟用。
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('suspend-modal')">取消</button>
-      <button class="btn btn-primary" style="background:#dc2626;" onclick="confirmSuspend()">確認停用</button>
-    </div>
-  </div>
-</div>
-
 <!-- Order preview popup -->
 <div class="popup-overlay" id="order-popup" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="popup" style="width:380px;">
@@ -742,6 +714,8 @@ tbody tr:hover td{background:#f7f9fc;}
     </div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 /* ── Data ── */
@@ -1057,33 +1031,7 @@ function saveDraft() {
   renderMaster();
 }
 
-function askActivate(id) {
-  pendingActionId = id;
-  const m = MASTER_DATA.find(x=>x.id===id);
-  document.getElementById('activate-name').textContent = m.name;
-  document.getElementById('activate-modal').classList.add('open');
-}
-function confirmActivate() {
-  const idx = MASTER_DATA.findIndex(x=>x.id===pendingActionId);
-  MASTER_DATA[idx].status = 'ACTIVE';
-  MASTER_DATA[idx].updateDate = nowStr();
-  closeModal('activate-modal');
-  renderMaster();
-}
 
-function askSuspend(id) {
-  pendingActionId = id;
-  const m = MASTER_DATA.find(x=>x.id===id);
-  document.getElementById('suspend-name').textContent = m.name;
-  document.getElementById('suspend-modal').classList.add('open');
-}
-function confirmSuspend() {
-  const idx = MASTER_DATA.findIndex(x=>x.id===pendingActionId);
-  MASTER_DATA[idx].status = 'SUSPENDED';
-  MASTER_DATA[idx].updateDate = nowStr();
-  closeModal('suspend-modal');
-  renderMaster();
-}
 
 function nowStr() {
   return new Date().toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -1145,6 +1093,16 @@ function setMsg(text, type) {
   el.className = 'cp-msg ' + (type||'');
 }
 
+/* ── Toast ── */
+let toastTimer = null;
+function showToast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast toast-' + type + ' show';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.classList.remove('show'); }, 1500);
+}
+
 function redeemCoupon() {
   const input = document.getElementById('cp-input');
   const code  = input.value.trim().toUpperCase();
@@ -1165,11 +1123,28 @@ function redeemCoupon() {
   input.value = '';
   setMsg('');
   renderApplied();
+  showToast('兌換成功');
+}
+
+/* ── Mock remove API ── */
+function mockRemoveApi(code) {
+  // 情境一：未傳入必填欄位
+  if (!code) return { success: false, message: '優惠碼必填' };
+  // 情境二：優惠碼存在且已使用（ZDKMPW 模擬此情境）
+  const data = REDEEM_MOCK[code];
+  if (data && data.status === 'USED') return { success: false, message: '優惠代碼錯誤，請重新輸入' };
+  return { success: true };
 }
 
 function removeApplied(code) {
+  const result = mockRemoveApi(code);
+  if (!result.success) {
+    showToast(result.message, 'error');
+    return;
+  }
   applied = applied.filter(c=>c.code!==code);
   renderApplied();
+  showToast('移除成功');
 }
 
 function renderApplied() {
