@@ -1130,9 +1130,7 @@ function redeemCoupon() {
 function mockRemoveApi(code) {
   // 情境一：未傳入必填欄位
   if (!code) return { success: false, message: '優惠碼必填' };
-  // 情境二：優惠碼存在且已使用（ZDKMPW 模擬此情境）
-  const data = REDEEM_MOCK[code];
-  if (data && data.status === 'USED') return { success: false, message: '優惠代碼錯誤，請重新輸入' };
+  // 其餘已套用的碼一律取消成功
   return { success: true };
 }
 
