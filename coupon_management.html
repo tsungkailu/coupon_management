@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>優惠碼管理</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Microsoft JhengHei',sans-serif;font-size:14px;background:#f0f4f8;color:#333;}
+.topbar{background:#1a3a6b;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:50px;position:sticky;top:0;z-index:100;}
+.topbar-title{font-size:16px;font-weight:500;}
+.topbar-user{font-size:13px;display:flex;gap:16px;align-items:center;opacity:.9;}
+.topbar-user .logout{opacity:.7;cursor:pointer;}
+.layout{display:flex;min-height:calc(100vh - 50px);}
+.sidebar{width:180px;background:#fff;border-right:1px solid #dde3ec;flex-shrink:0;padding-top:8px;}
+.sidebar-group{font-size:12px;color:#1a3a6b;font-weight:500;padding:10px 16px 4px;display:flex;justify-content:space-between;cursor:pointer;user-select:none;}
+.sidebar-group:hover{background:#f5f7fb;}
+.sidebar-item{font-size:13px;color:#555;padding:9px 16px 9px 26px;cursor:pointer;border-left:3px solid transparent;}
+.sidebar-item:hover{background:#f0f4f8;color:#1a3a6b;}
+.sidebar-item.active{color:#1a3a6b;background:#e8edf6;font-weight:500;border-left-color:#1a3a6b;}
+.main{flex:1;padding:24px 28px;overflow:auto;}
+.breadcrumb{font-size:12px;color:#888;margin-bottom:12px;}
+.breadcrumb a{color:#1a3a6b;text-decoration:none;}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.page-title{font-size:22px;font-weight:500;color:#1a3a6b;}
+.tabs{display:flex;border-bottom:2px solid #dde3ec;margin-bottom:18px;}
+.tab{padding:9px 24px;font-size:14px;color:#666;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;}
+.tab:hover{color:#1a3a6b;}
+.tab.active{color:#1a3a6b;font-weight:500;border-bottom-color:#1a3a6b;}
+.filter-box{background:#fff;border:1px solid #dde3ec;border-radius:6px;padding:18px 20px;margin-bottom:16px;}
+.filter-grid{display:grid;gap:12px 16px;}
+.g2{grid-template-columns:1fr 1fr;}
+.g3{grid-template-columns:1fr 1fr 1fr;}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr;}
+.filter-field label{display:block;font-size:12px;color:#555;margin-bottom:5px;font-weight:500;}
+.filter-field input,.filter-field select{width:100%;border:1px solid #c8d0dc;border-radius:4px;padding:7px 10px;font-size:13px;color:#333;background:#fff;height:36px;outline:none;}
+.filter-field input:focus,.filter-field select:focus{border-color:#1a3a6b;box-shadow:0 0 0 2px rgba(26,58,107,.1);}
+.filter-field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
+.filter-row-gap{margin-top:12px;}
+.filter-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid #edf0f5;}
+.btn{border-radius:4px;padding:7px 18px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-family:inherit;}
+.btn-primary{background:#1a3a6b;color:#fff;border:none;}
+.btn-primary:hover{background:#14306b;}
+.btn-outline{background:#fff;color:#333;border:1px solid #c8d0dc;}
+.btn-outline:hover{border-color:#1a3a6b;color:#1a3a6b;}
+.btn-search{background:#1a3a6b;color:#fff;border:none;padding:7px 20px;}
+.btn-search:hover{background:#14306b;}
+.btn-reset{background:#fff;color:#444;border:1px solid #c8d0dc;}
+.btn-reset:hover{background:#f5f7fb;}
+.table-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.result-count{font-size:13px;color:#666;}
+.table-wrap{background:#fff;border:1px solid #dde3ec;border-radius:6px;overflow:hidden;}
+.table-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead tr{background:#edf0f5;}
+th{padding:11px 12px;text-align:left;color:#444;font-weight:500;font-size:12px;white-space:nowrap;border-bottom:1px solid #dde3ec;}
+td{padding:11px 12px;color:#333;border-top:1px solid #edf0f5;vertical-align:middle;}
+tbody tr:hover td{background:#f7f9fc;}
+.empty-row td{text-align:center;padding:48px;color:#aaa;font-size:13px;}
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;font-weight:500;white-space:nowrap;}
+.badge-referral{background:#dbeafe;color:#1e40af;}
+.badge-birthday{background:#ede9fe;color:#5b21b6;}
+.badge-available{background:#dcfce7;color:#166534;}
+.badge-used{background:#f1f5f9;color:#475569;}
+.badge-expired{background:#fef9c3;color:#854d0e;}
+.badge-active{background:#dcfce7;color:#166534;}
+.badge-draft{background:#fff7ed;color:#9a3412;}
+.badge-suspended{background:#fee2e2;color:#991b1b;}
+.act{background:none;border:1px solid #c8d0dc;border-radius:4px;padding:4px 10px;font-size:12px;color:#444;cursor:pointer;white-space:nowrap;font-family:inherit;}
+.act:hover{border-color:#1a3a6b;color:#1a3a6b;}
+.act.red:hover{border-color:#dc2626;color:#dc2626;}
+.act.green:hover{border-color:#16a34a;color:#16a34a;}
+.acts{display:flex;gap:6px;align-items:center;}
+.mono{font-family:'Courier New',monospace;letter-spacing:.05em;font-size:12px;}
+.sub{font-size:11px;color:#888;margin-top:2px;}
+.required{color:#dc2626;}
+.link-btn{background:none;border:none;color:#1a3a6b;font-size:12px;cursor:pointer;text-decoration:underline;padding:0;font-family:inherit;}
+.link-btn:hover{color:#14306b;}
+
+/* Detail side panel */
+.detail-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:flex-start;justify-content:flex-end;}
+.detail-overlay.open{display:flex;}
+.detail-panel{background:#fff;width:480px;height:100vh;overflow-y:auto;padding:28px 28px 40px;box-shadow:-4px 0 20px rgba(0,0,0,.12);}
+.detail-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+.detail-title{font-size:17px;font-weight:500;color:#1a3a6b;}
+.detail-close{background:none;border:none;font-size:22px;cursor:pointer;color:#888;line-height:1;}
+.detail-close:hover{color:#333;}
+.detail-section{margin-bottom:20px;}
+.detail-section-title{font-size:12px;color:#888;font-weight:500;margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em;}
+.detail-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f4f8;font-size:13px;gap:16px;}
+.detail-row:last-child{border-bottom:none;}
+.detail-label{color:#666;flex-shrink:0;width:130px;}
+.detail-value{color:#333;text-align:right;font-size:13px;}
+.detail-value.blue{color:#1a3a6b;}
+.detail-value.red{color:#dc2626;font-weight:500;}
+.detail-value.purple{color:#7c3aed;}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:8px;padding:28px 32px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative;}
+.modal-sm{width:420px;}
+.modal-title{font-size:17px;font-weight:500;color:#1a3a6b;margin-bottom:16px;}
+.modal-close{position:absolute;top:16px;right:20px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1;}
+.modal-close:hover{color:#333;}
+.modal-grid{display:grid;gap:14px;}
+.modal-field label{display:block;font-size:12px;color:#555;font-weight:500;margin-bottom:5px;}
+.modal-field input,.modal-field select,.modal-field textarea{width:100%;border:1px solid #c8d0dc;border-radius:4px;padding:8px 10px;font-size:13px;color:#333;outline:none;font-family:inherit;}
+.modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:#1a3a6b;box-shadow:0 0 0 2px rgba(26,58,107,.1);}
+.modal-field textarea{height:72px;resize:vertical;}
+.modal-field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
+.modal-hint{font-size:11px;color:#888;margin-top:4px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:22px;padding-top:16px;border-top:1px solid #edf0f5;}
+.modal-body-text{font-size:13px;color:#444;line-height:1.7;margin-bottom:8px;}
+.modal-warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:4px;padding:10px 14px;font-size:13px;color:#9a3412;margin-top:12px;line-height:1.6;}
+.modal-info{background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;padding:10px 14px;font-size:13px;color:#1e40af;margin-top:12px;line-height:1.6;}
+.checkbox-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#444;margin-top:4px;}
+.checkbox-row input[type=checkbox]{width:16px;height:16px;cursor:pointer;}
+
+/* ── 兌換優惠碼區塊 ── */
+.redeem-demo{max-width:1100px;}
+.redeem-demo-label{font-size:12px;color:#888;margin-bottom:16px;padding:10px 14px;background:#fffbeb;border:1px solid #fcd34d;border-radius:4px;}
+.demo-status-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 16px;background:#fff;border:1px solid #dde3ec;border-radius:6px;}
+.demo-status-label{font-size:12px;color:#666;}
+.demo-status-select{border:1px solid #c8d0dc;border-radius:4px;padding:5px 28px 5px 10px;font-size:13px;color:#333;background:#fff;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;font-family:inherit;}
+.demo-status-badge{font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;}
+.sale-section{background:#fff;border:1px solid #dde3ec;border-radius:6px;margin-bottom:16px;overflow:hidden;}
+.sale-section-header{background:#edf0f5;padding:10px 16px;font-size:13px;font-weight:500;color:#1a3a6b;border-bottom:1px solid #dde3ec;}
+.sale-section-body{padding:16px;}
+.cp-input-row{display:flex;gap:8px;align-items:center;}
+.cp-input-row input{width:160px;font-family:'Courier New',monospace;letter-spacing:.08em;text-transform:uppercase;border:1px solid #c8d0dc;border-radius:4px;padding:7px 10px;font-size:13px;height:36px;outline:none;}
+.cp-input-row input:focus{border-color:#1a3a6b;box-shadow:0 0 0 2px rgba(26,58,107,.1);}
+.cp-input-row input::placeholder{text-transform:none;letter-spacing:normal;font-family:'Microsoft JhengHei',sans-serif;}
+.cp-msg{font-size:13px;margin-left:4px;}
+.cp-msg.error{color:#dc2626;}
+.cp-msg.warning{color:#d97706;}
+.cp-hint{font-size:12px;color:#888;margin-top:6px;}
+.cp-table-wrap{margin-top:14px;border-top:1px solid #edf0f5;padding-top:12px;}
+.cp-readonly-label{font-size:12px;color:#888;margin-bottom:8px;}
+.cp-table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;}
+.cp-table th{color:#555;font-weight:500;text-align:left;padding:0 12px 8px 0;font-size:12px;white-space:nowrap;border-bottom:1px solid #edf0f5;}
+.cp-table td{padding:10px 12px 10px 0;border-top:1px solid #edf0f5;color:#333;vertical-align:middle;}
+.cp-discount{color:#dc2626;font-weight:500;}
+.cp-remove-btn{background:none;border:1px solid #c8d0dc;border-radius:4px;padding:4px 10px;font-size:12px;color:#555;cursor:pointer;white-space:nowrap;}
+.cp-remove-btn:hover{background:#fee2e2;border-color:#dc2626;color:#dc2626;}
+.cp-total-row{display:flex;justify-content:flex-end;padding-top:10px;border-top:1px solid #c8d0dc;margin-top:4px;gap:12px;align-items:center;}
+.cp-total-label{font-size:13px;color:#666;}
+.cp-total-amount{font-size:15px;font-weight:500;color:#dc2626;}
+.cp-locked-hint{font-size:12px;color:#888;font-style:italic;margin-top:6px;}
+.cp-scenarios{margin-top:16px;padding:12px 14px;background:#f8f9fb;border:1px solid #e4e8f0;border-radius:4px;}
+.cp-scenarios-title{font-size:11px;color:#888;font-weight:500;margin-bottom:8px;}
+.cp-scenario-list{display:flex;flex-wrap:wrap;gap:6px;}
+.cp-scenario-chip{font-size:12px;font-family:'Courier New',monospace;background:#fff;border:1px solid #c8d0dc;border-radius:4px;padding:4px 10px;cursor:pointer;color:#444;}
+.cp-scenario-chip:hover{border-color:#1a3a6b;color:#1a3a6b;background:#e8edf6;}
+.cp-scenario-note{font-family:'Microsoft JhengHei',sans-serif;font-size:11px;color:#888;margin-left:4px;letter-spacing:0;}
+
+/* Coupon master popup */
+.popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400;align-items:center;justify-content:center;}
+.popup-overlay.open{display:flex;}
+.popup{background:#fff;border-radius:8px;padding:24px 28px;width:560px;max-width:95vw;max-height:85vh;overflow-y:auto;position:relative;}
+.popup-title{font-size:16px;font-weight:500;color:#1a3a6b;margin-bottom:16px;}
+.popup-close{position:absolute;top:14px;right:18px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;}
+.popup-close:hover{color:#333;}
+.popup-row{display:flex;padding:8px 0;border-bottom:1px solid #f0f4f8;font-size:13px;gap:12px;}
+.popup-row:last-child{border-bottom:none;}
+.popup-label{color:#666;flex-shrink:0;width:110px;font-size:12px;}
+.popup-value{color:#333;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">一手中古車</div>
+  <div class="topbar-user"><span>UserName</span><span class="logout">登出</span></div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-group">行銷設定 <span>∧</span></div>
+    <div class="sidebar-item active" onclick="switchTab('master')" style="cursor:pointer;">優惠碼管理</div>
+    <div class="sidebar-item" style="padding-left:36px;font-size:12px;color:#888;" onclick="switchTab('master')">優惠碼主檔</div>
+    <div class="sidebar-item" style="padding-left:36px;font-size:12px;color:#888;" onclick="switchTab('query')">優惠碼查詢</div>
+    <div class="sidebar-group">業績管理 <span>∧</span></div>
+    <div class="sidebar-item" onclick="switchTab('redeem')" style="cursor:pointer;">出售管理</div>
+    <div class="sidebar-item" style="padding-left:36px;font-size:12px;color:#888;" onclick="switchTab('redeem')">兌換優惠碼</div>
+    <div class="sidebar-item" style="padding-left:36px;font-size:12px;color:#888;" onclick="switchTab('report')">出售報表下載</div>
+  </div>
+
+  <div class="main">
+    <div class="breadcrumb">行銷設定 &gt; <a href="#">優惠碼管理</a></div>
+    <div class="page-header">
+      <div class="page-title">優惠碼管理</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tab-redeem" onclick="switchTab('redeem')">兌換優惠碼 <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">階段一</span></div>
+      <div class="tab" id="tab-report" onclick="switchTab('report')">出售報表下載 <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">階段一</span></div>
+      <!-- 業代隱藏：移除下兩行 -->
+      <div class="tab" id="tab-master" onclick="switchTab('master')">優惠碼主檔 <span style="background:#ede9fe;color:#5b21b6;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">階段二</span></div>
+      <div class="tab" id="tab-query" onclick="switchTab('query')">優惠碼查詢 <span style="background:#ede9fe;color:#5b21b6;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">階段二</span></div>
+    </div>
+
+    <!-- ===== Tab 3（順序四）：優惠碼查詢 ===== -->
+    <div id="pane-query" style="display:none;">
+      <div class="filter-box">
+        <div class="filter-grid g4">
+          <div class="filter-field">
+            <label>來源客戶證號／統編</label>
+            <input type="text" id="q-idno" placeholder="輸入身分證號或統編" />
+          </div>
+          <div class="filter-field">
+            <label>來源訂單編號</label>
+            <input type="text" id="q-src-order" placeholder="例：P2026211000" />
+          </div>
+          <div class="filter-field">
+            <label>兌換訂單編號</label>
+            <input type="text" id="q-used-order" placeholder="例：P2026310050" />
+          </div>
+          <div class="filter-field">
+            <label>優惠碼序號</label>
+            <input type="text" id="q-code" placeholder="六碼英文" style="font-family:'Courier New',monospace;letter-spacing:.05em;" oninput="this.value=this.value.toUpperCase()" maxlength="6" />
+          </div>
+        </div>
+        <div class="filter-grid g4 filter-row-gap">
+          <div class="filter-field">
+            <label>類型</label>
+            <select id="q-type">
+              <option value="">全部</option>
+              <option value="REFERRAL">推薦碼</option>
+              <option value="BIRTHDAY">生日碼</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label>使用狀態</label>
+            <select id="q-status">
+              <option value="">全部</option>
+              <option value="AVAILABLE">未使用</option>
+              <option value="USED">已兌換</option>
+              <option value="EXPIRED">已過期</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label>發送時間（起）</label>
+            <input type="date" id="q-date-start" />
+          </div>
+          <div class="filter-field">
+            <label>發送時間（迄）</label>
+            <input type="date" id="q-date-end" />
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-reset" onclick="resetQuery()">清除</button>
+          <button class="btn btn-search" onclick="searchQuery()">🔍 搜尋</button>
+        </div>
+      </div>
+      <div class="table-toolbar">
+        <div class="result-count" id="q-count"></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:108px;">發送時間 ↓</th>
+                <th style="width:120px;">優惠碼／類型</th>
+                <th style="width:110px;">優惠碼名稱</th>
+                <th style="width:76px;">狀態</th>
+                <th style="width:88px;">折扣金額</th>
+                <th style="width:170px;">有效日期</th>
+                <th style="width:160px;">來源訂單／客戶</th>
+                <th style="width:150px;">兌換訂單／時間</th>
+              </tr>
+            </thead>
+            <tbody id="q-tbody">
+              <tr class="empty-row"><td colspan="8">請輸入查詢條件後搜尋</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Tab 2：優惠碼主檔 ===== -->
+    <div id="pane-master" style="display:none;">
+      <div class="table-toolbar">
+        <div class="result-count" id="m-count">共 5 筆</div>
+        <button class="btn btn-primary" onclick="openCreateModal()">＋ 新增優惠碼主檔</button>
+      </div>
+      <div class="filter-box" style="margin-bottom:16px;">
+        <div class="filter-grid g3">
+          <div class="filter-field">
+            <label>名稱（模糊搜尋）</label>
+            <input type="text" id="m-search-name" placeholder="輸入名稱關鍵字" />
+          </div>
+          <div class="filter-field">
+            <label>類型</label>
+            <select id="m-search-type">
+              <option value="">全部</option>
+              <option value="REFERRAL">推薦碼</option>
+              <option value="BIRTHDAY">生日碼</option>
+            </select>
+          </div>
+          <div class="filter-field">
+            <label>狀態</label>
+            <select id="m-search-status">
+              <option value="">全部</option>
+              <option value="DRAFT">草稿</option>
+              <option value="ACTIVE">啟用</option>
+              <option value="SUSPENDED">停用</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-reset" onclick="resetMasterSearch()">清除</button>
+          <button class="btn btn-search" onclick="renderMaster()">🔍 搜尋</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:140px;">名稱</th>
+                <th style="width:80px;">類型</th>
+                <th style="width:68px;">狀態</th>
+                <th style="width:88px;">折扣金額</th>
+                <th style="width:80px;">效期（天）</th>
+                <th>說明（客戶端）</th>
+                <th style="width:128px;">更新時間</th>
+                <th style="width:68px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="m-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Tab 1（順序一）：兌換優惠碼示意 ===== -->
+    <div id="pane-redeem">
+      <div class="redeem-demo-label" style="margin-bottom:14px;">
+        ℹ️ 此頁籤為示意。左側為系統實際畫面，右側為示意控制面板（不會出現在正式頁面）。
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;">
+
+        <!-- ── 左側：系統實際畫面 ── -->
+        <div>
+          <div class="sale-section">
+            <div class="sale-section-header">車價資訊</div>
+            <div class="sale-section-body" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+              <div><div style="font-size:12px;color:#666;margin-bottom:4px;">成交車價（不含配件）</div><div style="font-weight:500;" id="demo-closedprice">1,200,000 元</div></div>
+              <div><div style="font-size:12px;color:#666;margin-bottom:4px;">配件總價</div><div style="font-weight:500;" id="demo-accessory">0 元</div></div>
+              <div>
+                <div style="font-size:12px;color:#666;margin-bottom:4px;">發票金額</div>
+                <div style="font-weight:500;" id="demo-invoice">1,200,000 元</div>
+                <div style="font-size:11px;color:#888;margin-top:2px;">= 成交車價 + 配件總價 − 折扣總價</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 優惠碼區塊：正式系統的呈現 -->
+          <div class="sale-section" id="cp-section">
+            <div class="sale-section-header">優惠碼</div>
+            <div class="sale-section-body">
+              <div id="cp-input-area">
+                <div class="cp-input-row">
+                  <input type="text" id="cp-input" maxlength="6" placeholder="輸入優惠碼" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')redeemCoupon()" />
+                  <button class="btn btn-primary" onclick="redeemCoupon()">兌換</button>
+                  <span id="cp-msg" class="cp-msg" aria-live="polite"></span>
+                </div>
+                <p class="cp-hint">推薦碼與生日碼均可在此輸入。生日碼限壽星本人使用，後端將驗證買受人身分。</p>
+              </div>
+              <div class="cp-table-wrap" id="cp-table-wrap" style="display:none;">
+                <div class="cp-readonly-label" id="cp-readonly-label" style="display:none;">已兌換優惠碼</div>
+                <table class="cp-table">
+                  <thead>
+                    <tr>
+                      <th style="width:96px;vertical-align:middle;">優惠碼</th>
+                      <th style="width:72px;vertical-align:middle;">類型</th>
+                      <th style="width:88px;vertical-align:middle;">折扣金額</th>
+                      <th style="vertical-align:middle;">優惠說明</th>
+                      <th style="width:110px;vertical-align:middle;">來源訂單</th>
+                      <th id="cp-action-th" style="width:60px;vertical-align:middle;"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="cp-tbody"></tbody>
+                </table>
+                <div class="cp-total-row">
+                  <span class="cp-total-label">合計折扣</span>
+                  <span class="cp-total-amount" id="cp-total">-0 元</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sale-section">
+            <div class="sale-section-header">付款資訊</div>
+            <div class="sale-section-body" style="color:#aaa;font-size:13px;padding:8px 0;">（付款相關欄位）</div>
+          </div>
+        </div>
+
+        <!-- ── 右側：示意控制面板 ── -->
+        <div style="position:sticky;top:70px;">
+          <div style="background:#f8f9fb;border:1px solid #dde3ec;border-radius:8px;padding:16px;">
+            <div style="font-size:12px;font-weight:600;color:#1a3a6b;margin-bottom:12px;letter-spacing:.03em;">示意控制面板</div>
+
+            <div style="margin-bottom:14px;">
+              <div style="font-size:11px;color:#888;font-weight:500;margin-bottom:6px;">模擬訂單狀態</div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <select class="demo-status-select" id="demo-status" onchange="onStatusChange()">
+                  <option value="DRAFT">暫存</option>
+                  <option value="SUPPLEMENT">申請補正</option>
+                  <option value="PENDING">出售申請中</option>
+                  <option value="APPROVED">出售核准</option>
+                  <option value="DELIVERED">交車</option>
+                  <option value="RETURNED">退購核准</option>
+                </select>
+                <span id="demo-status-badge" class="demo-status-badge badge badge-draft">暫存</span>
+              </div>
+              <div style="margin-top:6px;">
+                <span id="demo-edit-hint" style="font-size:12px;color:#16a34a;">✓ 可兌換／移除</span>
+              </div>
+            </div>
+
+            <div style="border-top:1px solid #e4e8f0;padding-top:12px;">
+              <div style="font-size:11px;color:#888;font-weight:500;margin-bottom:8px;">測試情境（點擊填入，再按「兌換」）</div>
+              <div style="display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="cp-scenario-chip" style="flex-shrink:0;" onclick="fillCode('AYXTEX')">AYXTEX</span>
+                  <span style="font-size:11px;color:#666;">推薦碼成功</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="cp-scenario-chip" style="flex-shrink:0;" onclick="fillCode('BCXTEX')">BCXTEX</span>
+                  <span style="font-size:11px;color:#666;">生日碼成功</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="cp-scenario-chip" style="flex-shrink:0;" onclick="fillCode('DUPREF')">DUPREF</span>
+                  <span style="font-size:11px;color:#666;">同主檔重複（購車推薦）</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="cp-scenario-chip" style="flex-shrink:0;" onclick="fillCode('BDONLY')">BDONLY</span>
+                  <span style="font-size:11px;color:#666;">生日碼限本人</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="cp-scenario-chip" style="flex-shrink:0;" onclick="fillCode('ZDKMPW')">ZDKMPW</span>
+                  <span style="font-size:11px;color:#666;">已兌換</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="cp-scenario-chip" style="flex-shrink:0;" onclick="fillCode('XXXXXX')">XXXXXX</span>
+                  <span style="font-size:11px;color:#666;">查無優惠碼</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="cp-scenario-chip" style="flex-shrink:0;" onclick="fillCode('ERRSYS')">ERRSYS</span>
+                  <span style="font-size:11px;color:#666;">系統異常</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== Tab 4：出售報表下載 ===== -->
+    <div id="pane-report" style="display:none;">
+      <div style="max-width:900px;">
+        <div style="background:#fff;border:1px solid #dde3ec;border-radius:6px;padding:20px 24px;margin-bottom:16px;">
+          <div style="font-size:15px;font-weight:500;color:#1a3a6b;margin-bottom:6px;">出售資料報表</div>
+          <div style="font-size:13px;color:#666;margin-bottom:16px;">包含所有出售訂單欄位，並附加三欄優惠碼資訊（折扣金額、兌換之生日碼、兌換之推薦碼）。</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="btn btn-primary" onclick="downloadReport()">⬇ 下載 Excel 報表</button>
+            <span style="font-size:12px;color:#888;">格式：.xlsx　資料：模擬假資料</span>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #dde3ec;border-radius:6px;overflow:hidden;">
+          <div style="background:#edf0f5;padding:10px 16px;font-size:13px;font-weight:500;color:#1a3a6b;border-bottom:1px solid #dde3ec;">報表欄位預覽</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead><tr style="background:#f5f7fb;vertical-align:middle;">
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">更新時間</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">訂單狀態</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">申請時間</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">出售類型</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">出售單號</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">牌照號碼</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">賣方公司別</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">賣方公司統編</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">排氣量</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">車輛等級</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">出廠年月</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">廠牌</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">車型</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">車色</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">出售里程</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">出廠牌價</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">公司定價</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">公司底價</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">內循損益</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">帳上殘值</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">拍賣殘值</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">業務人員名稱</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">賣方單位名稱</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">客戶來源</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">買方身份</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">法人公司名稱</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">買方統編/證號</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">買方姓名/聯絡人姓名</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">買方國碼+手機</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">保固條件</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">訂單金額(發票金額)</th>
+                <th style="padding:8px 12px;text-align:left;color:#dc2626;font-weight:600;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">成交車價(不含配件)</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">出售配件總價</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">配件明細</th>
+                <th style="padding:8px 12px;text-align:left;color:#dc2626;font-weight:600;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">折扣金額</th>
+                <th style="padding:8px 12px;text-align:left;color:#dc2626;font-weight:600;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">兌換之生日碼</th>
+                <th style="padding:8px 12px;text-align:left;color:#dc2626;font-weight:600;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">兌換之推薦碼</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">佣金總價</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">預計交車日期</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">溢價金額(不含出售配件)</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">貸款金額</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">超貸金額</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">發票日期</th>
+                <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;vertical-align:middle;">發票號碼</th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2026/07/29</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">交車</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2026/07/24</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">出售</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;font-family:monospace;">P2026070095</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">RDZ-9280</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">格上汽車租賃</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">12208883</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2378</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">B+</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2023/04</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">MITSUBISHI</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">DELICA</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">銀</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">41,588</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">813,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">601,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">567,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">60,975</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">365,850</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">402,435</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">尤健達</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">士林營業所</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">客戶轉介</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">法人</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">光之島有限公司</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">90333866</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">劉家豪</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">(886)0930887897</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">五大系統延長保固</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">570,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">570,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">0</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;color:#dc2626;font-weight:500;">8,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;color:#dc2626;font-family:monospace;">BCXTEX</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;color:#dc2626;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">0</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2026/07/29</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">3,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">500,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">0</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2026/07/27</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;font-family:monospace;">DB81857298</td>
+                </tr>
+                <tr style="background:#fafbfc;">
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2026/07/20</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">交車</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2026/07/15</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">出售</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;font-family:monospace;">P2026310050</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">ABD-1234</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">格上汽車租賃</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">12208883</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">1998</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">A</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2022/08</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">TOYOTA</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">CAMRY</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">白</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">32,100</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">950,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">780,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">730,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">42,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">480,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">510,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">陳雅婷</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">內湖營業所</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">自行開發</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">自然人</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">A123456789</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">王大明</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">(886)0912345678</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">原廠保固</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">770,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">770,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">0</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;color:#dc2626;font-weight:500;">18,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;color:#dc2626;font-family:monospace;">BCXTEX</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;color:#dc2626;font-family:monospace;">AYXTEX</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">0</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2026/07/20</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">0</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">600,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">0</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;">2026/07/18</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;vertical-align:middle;font-family:monospace;">WB12345678</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Detail side panel (query) -->
+<div class="detail-overlay" id="detail-overlay" onclick="closeDetail(event)">
+  <div class="detail-panel">
+    <div class="detail-header">
+      <div class="detail-title" id="detail-title">優惠碼明細</div>
+      <button class="detail-close" onclick="closeDetailPanel()">✕</button>
+    </div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- Coupon master popup (read-only) -->
+<div class="popup-overlay" id="master-popup" onclick="closeMasterPopup(event)">
+  <div class="popup">
+    <button class="popup-close" onclick="document.getElementById('master-popup').classList.remove('open')">✕</button>
+    <div class="popup-title" id="mp-title">優惠碼主檔明細</div>
+    <div id="mp-content"></div>
+  </div>
+</div>
+
+<!-- Create modal -->
+<div class="modal-overlay" id="create-modal" onclick="closeModalOverlay('create-modal',event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('create-modal')">✕</button>
+    <div class="modal-title">新增優惠碼主檔</div>
+    <div class="modal-grid">
+      <div class="modal-field">
+        <label>名稱 <span class="required">*</span></label>
+        <input type="text" id="c-name" placeholder="例：購車推薦" />
+      </div>
+      <div class="modal-grid g2">
+        <div class="modal-field">
+          <label>類型 <span class="required">*</span></label>
+          <select id="c-type">
+            <option value="">請選擇</option>
+            <option value="REFERRAL">推薦碼</option>
+            <option value="BIRTHDAY">生日碼</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label>折扣金額（元）<span class="required">*</span></label>
+          <input type="number" id="c-discount" placeholder="例：8000" min="0" />
+        </div>
+      </div>
+      <div class="modal-field">
+        <label>效期（天數）</label>
+        <div class="checkbox-row" style="margin-bottom:6px;">
+          <input type="checkbox" id="c-unlimited" onchange="toggleUnlimited()" />
+          <label for="c-unlimited" style="font-size:13px;font-weight:400;color:#333;cursor:pointer;">永久有效（不填效期）</label>
+        </div>
+        <input type="number" id="c-period" placeholder="例：180" min="1" />
+        <div class="modal-hint">推薦碼建議 180 天，生日碼建議 40 天</div>
+      </div>
+      <div class="modal-field">
+        <label>說明（客戶端）<span class="required">*</span></label>
+        <textarea id="c-desc" placeholder="例：交車後產生，推薦人享菁鑽券回饋"></textarea>
+        <div class="modal-hint">此說明將顯示於兌換確認區塊，請填寫使用者可理解的文字</div>
+      </div>
+      <div class="modal-field">
+        <label>備註（內部用）</label>
+        <textarea id="c-notes" placeholder="內部備註，不對外顯示（可空白）" style="height:56px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('create-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveDraft()">儲存草稿</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activate confirm modal -->
+<div class="modal-overlay" id="activate-modal" onclick="closeModalOverlay('activate-modal',event)">
+  <div class="modal modal-sm">
+    <button class="modal-close" onclick="closeModal('activate-modal')">✕</button>
+    <div class="modal-title">確認啟用</div>
+    <div class="modal-body-text">確定要啟用「<span id="activate-name"></span>」嗎？</div>
+    <div class="modal-warn">
+      ⚠️ 啟用後將<strong>立刻生效</strong>，系統將開始依此主檔發放優惠碼。<br/>
+      啟用後<strong>不可再編輯</strong>主檔內容，如需調整請先停用。
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('activate-modal')">取消</button>
+      <button class="btn btn-primary" onclick="confirmActivate()">確認啟用</button>
+    </div>
+  </div>
+</div>
+
+<!-- Suspend confirm modal -->
+<div class="modal-overlay" id="suspend-modal" onclick="closeModalOverlay('suspend-modal',event)">
+  <div class="modal modal-sm">
+    <button class="modal-close" onclick="closeModal('suspend-modal')">✕</button>
+    <div class="modal-title">確認停用</div>
+    <div class="modal-body-text">確定要停用「<span id="suspend-name"></span>」嗎？</div>
+    <div class="modal-warn">
+      ⚠️ 停用後，<strong>所有已發出的相關優惠碼將無法兌換</strong>。<br/>
+      停用後可隨時重新啟用。
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('suspend-modal')">取消</button>
+      <button class="btn btn-primary" style="background:#dc2626;" onclick="confirmSuspend()">確認停用</button>
+    </div>
+  </div>
+</div>
+
+<!-- Order preview popup -->
+<div class="popup-overlay" id="order-popup" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="popup" style="width:380px;">
+    <button class="popup-close" onclick="document.getElementById('order-popup').classList.remove('open')">✕</button>
+    <div class="popup-title" id="order-popup-title">出售訂單明細</div>
+    <div style="font-size:13px;color:#444;line-height:1.7;margin-bottom:16px;" id="order-popup-body"></div>
+    <div style="text-align:center;padding:20px 0;border:1.5px dashed #c8d0dc;border-radius:6px;color:#888;font-size:13px;">
+      🔗 實際將導連至出售訂單明細頁面
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-outline" onclick="document.getElementById('order-popup').classList.remove('open')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Data ── */
+let MASTER_DATA = [
+  { id:1, name:'購車推薦',     type:'REFERRAL', status:'ACTIVE',     discount:8000,  period:180,  unlimited:false, desc:'交車後產生，推薦人享菁鑽券回饋',  updateDate:'2026/07/01 09:00', notes:'' },
+  { id:2, name:'生日好禮',     type:'BIRTHDAY',  status:'ACTIVE',     discount:10000, period:40,   unlimited:false, desc:'生日前 30 天發送，限壽星本人使用', updateDate:'2026/07/01 09:00', notes:'' },
+  { id:3, name:'夏季購車活動', type:'REFERRAL', status:'DRAFT',      discount:5000,  period:90,   unlimited:false, desc:'夏季限定，車價折扣 5,000 元',      updateDate:'2026/07/28 14:22', notes:'行銷部提供' },
+  { id:4, name:'舊客回娘家',   type:'BIRTHDAY',  status:'SUSPENDED',  discount:8000,  period:30,   unlimited:false, desc:'保有客戶專屬生日禮',               updateDate:'2026/05/10 11:00', notes:'' },
+  { id:5, name:'長期回饋碼',   type:'REFERRAL', status:'ACTIVE',     discount:3000,  period:null, unlimited:true,  desc:'長期有效推薦碼，無期限',           updateDate:'2026/06/15 16:30', notes:'特殊客戶適用' },
+];
+
+const QUERY_DATA = [
+  { code:'FGKTWZ', type:'REFERRAL', couponName:'購車推薦',  status:'USED',      buyerName:'林美玲', buyerIdNo:'D456789012', sourceOrder:'P2026301200', validStart:'2026/05/10 00:00', validEnd:'2026/11/10 23:59', discount:8000,  usedOrder:'P2026401500', usedDate:'2026/07/05', issuedDate:'2026/05/10' },
+  { code:'AYXTEX', type:'REFERRAL', couponName:'購車推薦',  status:'AVAILABLE', buyerName:'王大明', buyerIdNo:'A123456789', sourceOrder:'P2026211000', validStart:'2026/02/01 00:00', validEnd:'2026/08/01 23:59', discount:8000,  usedOrder:null,          usedDate:null,         issuedDate:'2026/02/01' },
+  { code:'BCXTEX', type:'BIRTHDAY', couponName:'生日好禮',  status:'USED',      buyerName:'王大明', buyerIdNo:'A123456789', sourceOrder:null,           validStart:'2026/07/01 00:00', validEnd:'2026/08/10 23:59', discount:10000, usedOrder:'P2026310050', usedDate:'2026/07/20', issuedDate:'2026/07/01' },
+  { code:'MNPQRT', type:'BIRTHDAY', couponName:'生日好禮',  status:'AVAILABLE', buyerName:'陳志偉', buyerIdNo:'C345678901', sourceOrder:null,           validStart:'2026/07/15 00:00', validEnd:'2026/08/24 23:59', discount:10000, usedOrder:null,          usedDate:null,         issuedDate:'2026/07/15' },
+  { code:'ZDKMPW', type:'REFERRAL', couponName:'購車推薦',  status:'EXPIRED',   buyerName:'李小花', buyerIdNo:'B234567890', sourceOrder:'P2026198450', validStart:'2025/10/01 00:00', validEnd:'2026/04/01 23:59', discount:8000,  usedOrder:null,          usedDate:null,         issuedDate:'2025/10/01' },
+];
+
+const REDEEM_MOCK = {
+  AYXTEX: { type:'REFERRAL', label:'購車推薦', couponMasterId:1, discount:8000,  desc:'購車推薦，車價折扣 8,000 元',  sourceOrder:'P2026211000' },
+  BCXTEX: { type:'BIRTHDAY', label:'生日好禮', couponMasterId:2, discount:10000, desc:'生日好禮，車價折扣 10,000 元', sourceOrder:null },
+  DUPREF: { status:'DUPLICATE_MASTER' },
+  BDONLY: { status:'BIRTHDAY_MISMATCH' },
+  ZDKMPW: { status:'USED' },
+  ERRSYS: { status:'ERROR' },
+};
+
+const STATUS_EDITABLE = ['DRAFT','SUPPLEMENT'];
+const STATUS_LABEL = { DRAFT:'暫存', SUPPLEMENT:'申請補正', PENDING:'出售申請中', APPROVED:'出售核准', DELIVERED:'交車', RETURNED:'退購核准' };
+const STATUS_BADGE_CLASS = { DRAFT:'badge-draft', SUPPLEMENT:'badge-draft', PENDING:'badge-referral', APPROVED:'badge-active', DELIVERED:'badge-active', RETURNED:'badge-used' };
+
+let pendingActionId = null;
+let applied = [];
+
+/* ── Tab ── */
+function switchTab(tab) {
+  ['query','master','redeem','report'].forEach(t => {
+    document.getElementById('pane-'+t).style.display = t===tab ? '' : 'none';
+    document.getElementById('tab-'+t).className = 'tab' + (t===tab ? ' active' : '');
+  });
+  if (tab==='master') renderMaster();
+}
+// 初始顯示 redeem
+document.addEventListener('DOMContentLoaded', () => switchTab('redeem'));
+
+/* ── Order popup ── */
+function openOrderPopup(orderId) {
+  document.getElementById('order-popup-title').textContent = `出售訂單：${orderId}`;
+  document.getElementById('order-popup-body').textContent = `訂單編號 ${orderId} 的詳細資料將顯示於此。`;
+  document.getElementById('order-popup').classList.add('open');
+}
+
+/* ── Download report ── */
+function downloadReport() {
+  // Build CSV with fake data (Excel-compatible UTF-8 BOM)
+  const headers = ['更新時間','訂單狀態','申請時間','出售類型','出售單號','牌照號碼','賣方公司別','賣方公司統編','排氣量','車輛等級','出廠年月','廠牌','車型','車色','出售里程','出廠牌價','公司定價','公司底價','內循損益','帳上殘值','拍賣殘值','業務人員名稱','賣方單位名稱','客戶來源','買方身份','法人公司名稱','買方統編/證號','買方姓名/聯絡人姓名','買方國碼+手機','保固條件','訂單金額(發票金額)','成交車價(不含配件)','出售配件總價','配件明細','折扣金額','兌換之生日碼','兌換之推薦碼','佣金總價','預計交車日期','溢價金額(不含出售配件)','貸款金額','超貸金額','發票日期','發票號碼'];
+  const rows = [
+    ['2026/07/29','交車','2026/07/24','出售','P2026070095','RDZ-9280','格上汽車租賃股份有限公司','12208883','2378','B+','2023/04','MITSUBISHI','DELICA','銀','41588','813000','601000','567000','60975','365850','402435','尤健達','士林營業所','客戶轉介','法人','光之島有限公司','90333866','劉家豪','(886)0930887897','五大系統延長保固','570000','570000','0','','8000','BCXTEX','','0','2026/07/29','3000','500000','0','2026/07/27','DB81857298'],
+    ['2026/07/20','交車','2026/07/15','出售','P2026310050','ABD-1234','格上汽車租賃股份有限公司','12208883','1998','A','2022/08','TOYOTA','CAMRY','白','32100','950000','780000','730000','42000','480000','510000','陳雅婷','內湖營業所','自行開發','自然人','','A123456789','王大明','(886)0912345678','原廠保固','770000','770000','0','','18000','BCXTEX','AYXTEX','0','2026/07/20','0','600000','0','2026/07/18','WB12345678'],
+    ['2026/07/05','交車','2026/06/28','出售','P2026401500','RDJ-1857','格上汽車租賃股份有限公司','12208883','1496','B','2021/11','HONDA','CR-V','黑','58200','720000','560000','520000','35000','310000','340000','林志明','信義營業所','客戶轉介','自然人','','D456789012','林美玲','(886)0988765432','無','552000','552000','0','','8000','','FGKTWZ','0','2026/07/05','2000','450000','0','2026/07/03','CC99001122'],
+  ];
+  const BOM = '\uFEFF';
+  const csv = BOM + [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = '出售資料報表.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ── Badges ── */
+function typeBadge(t) {
+  return t==='REFERRAL' ? '<span class="badge badge-referral">推薦碼</span>' : '<span class="badge badge-birthday">生日碼</span>';
+}
+function statusBadge(s) {
+  const m = { AVAILABLE:'<span class="badge badge-available">未使用</span>', USED:'<span class="badge badge-used">已兌換</span>', EXPIRED:'<span class="badge badge-expired">已過期</span>' };
+  return m[s]||s;
+}
+function masterStatusBadge(s) {
+  const m = { ACTIVE:'<span class="badge badge-active">啟用</span>', DRAFT:'<span class="badge badge-draft">草稿</span>', SUSPENDED:'<span class="badge badge-suspended">停用</span>' };
+  return m[s]||s;
+}
+
+/* ── Query ── */
+function resetQuery() {
+  ['q-idno','q-src-order','q-used-order','q-code','q-date-start','q-date-end'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('q-type').value='';
+  document.getElementById('q-status').value='';
+  document.getElementById('q-tbody').innerHTML='<tr class="empty-row"><td colspan="12">請輸入查詢條件後搜尋</td></tr>';
+  document.getElementById('q-count').textContent='';
+}
+
+function searchQuery() {
+  const idno      = document.getElementById('q-idno').value.trim();
+  const srcOrder  = document.getElementById('q-src-order').value.trim();
+  const usedOrder = document.getElementById('q-used-order').value.trim();
+  const code      = document.getElementById('q-code').value.trim().toUpperCase();
+  const type      = document.getElementById('q-type').value;
+  const status    = document.getElementById('q-status').value;
+
+  const dateStart = document.getElementById('q-date-start').value; // 'YYYY-MM-DD'
+  const dateEnd   = document.getElementById('q-date-end').value;
+
+  let results = QUERY_DATA.filter(r => {
+    if (idno      && r.buyerIdNo !== idno)         return false;
+    if (srcOrder  && r.sourceOrder !== srcOrder)    return false;
+    if (usedOrder && r.usedOrder  !== usedOrder)    return false;
+    if (code      && r.code !== code)               return false;
+    if (type      && r.type !== type)               return false;
+    if (status    && r.status !== status)           return false;
+    // issuedDate is 'YYYY/MM/DD', convert for comparison
+    const issued = r.issuedDate.replace(/\//g, '-');
+    if (dateStart && issued < dateStart)            return false;
+    if (dateEnd   && issued > dateEnd)              return false;
+    return true;
+  });
+
+  // 預設發送時間由近到遠
+  results.sort((a,b) => b.issuedDate.localeCompare(a.issuedDate));
+
+  document.getElementById('q-count').textContent = `共 ${results.length} 筆`;
+  const tbody = document.getElementById('q-tbody');
+  if (!results.length) {
+    tbody.innerHTML='<tr class="empty-row"><td colspan="8">查無符合條件的優惠碼</td></tr>';
+    return;
+  }
+  tbody.innerHTML = results.map(r => {
+    const master = MASTER_DATA.find(m=>m.name===r.couponName);
+    const mJson = JSON.stringify(master).replace(/'/g,"&#39;");
+    const typeText = r.type==='REFERRAL' ? '推薦碼' : '生日碼';
+    return `
+    <tr>
+      <td style="font-size:12px;color:#666;">${r.issuedDate}</td>
+      <td>
+        <div><span class="mono">${r.code}</span></div>
+        <div style="font-size:11px;color:#888;margin-top:2px;">${typeText}</div>
+      </td>
+      <td style="font-size:12px;white-space:nowrap;">
+        ${r.couponName}
+        <button title="查看主檔明細" style="background:none;border:none;cursor:pointer;color:#1a3a6b;padding:0 0 0 4px;font-size:14px;vertical-align:middle;" onclick='openMasterPopup(JSON.parse(this.dataset.m))' data-m='${mJson}'>🔍</button>
+      </td>
+      <td>${statusBadge(r.status)}</td>
+      <td class="cp-discount">-${r.discount.toLocaleString()} 元</td>
+      <td style="font-size:12px;line-height:1.6;">${r.validStart}<br/>${r.validEnd}</td>
+      <td>
+        <div style="font-size:12px;color:#1a3a6b;">${r.sourceOrder ? `${r.sourceOrder} <button title="查看來源訂單" style="background:none;border:none;cursor:pointer;font-size:13px;vertical-align:middle;padding:0;" onclick="openOrderPopup('${r.sourceOrder}')">🔍</button>` : '—'}</div>
+        <div style="font-size:12px;color:#555;margin-top:2px;">${r.buyerName}(${r.buyerIdNo})</div>
+      </td>
+      <td>
+        <div style="font-size:12px;color:#1a3a6b;">${r.usedOrder ? `${r.usedOrder} <button title="查看兌換訂單" style="background:none;border:none;cursor:pointer;font-size:13px;vertical-align:middle;padding:0;" onclick="openOrderPopup('${r.usedOrder}')">🔍</button>` : '—'}</div>
+        <div style="font-size:12px;color:#666;margin-top:2px;">${r.usedDate||'—'}</div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Query detail ── */
+function openQueryDetail(r) {
+  document.getElementById('detail-title').textContent = `優惠碼明細：${r.code}`;
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title">優惠碼資訊</div>
+      <div class="detail-row"><span class="detail-label">優惠碼</span><span class="detail-value mono">${r.code}</span></div>
+      <div class="detail-row"><span class="detail-label">所屬優惠碼主檔</span><span class="detail-value">${r.couponName}</span></div>
+      <div class="detail-row"><span class="detail-label">類型</span><span class="detail-value">${typeBadge(r.type)}</span></div>
+      <div class="detail-row"><span class="detail-label">狀態</span><span class="detail-value">${statusBadge(r.status)}</span></div>
+      <div class="detail-row"><span class="detail-label">折扣金額</span><span class="detail-value red">-${r.discount.toLocaleString()} 元</span></div>
+      <div class="detail-row"><span class="detail-label">有效期間起日</span><span class="detail-value">${r.validStart}</span></div>
+      <div class="detail-row"><span class="detail-label">有效期間迄日</span><span class="detail-value">${r.validEnd}</span></div>
+      <div class="detail-row"><span class="detail-label">發送時間</span><span class="detail-value">${r.issuedDate}</span></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">來源客戶資訊</div>
+      <div class="detail-row"><span class="detail-label">來源客戶證號</span><span class="detail-value mono">${r.buyerIdNo}</span></div>
+      <div class="detail-row"><span class="detail-label">來源訂單</span><span class="detail-value blue">${r.sourceOrder||'— （排程發送）'}</span></div>
+      ${r.type==='BIRTHDAY'?'<div class="detail-row"><span class="detail-label">備註</span><span class="detail-value purple">生日碼限壽星本人，兌換時後端比對買受人身分</span></div>':''}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">兌換紀錄</div>
+      <div class="detail-row"><span class="detail-label">兌換訂單</span><span class="detail-value blue">${r.usedOrder||'—'}</span></div>
+      <div class="detail-row"><span class="detail-label">兌換時間</span><span class="detail-value">${r.usedDate||'—'}</span></div>
+    </div>
+  `;
+  document.getElementById('detail-overlay').classList.add('open');
+}
+function closeDetailPanel() { document.getElementById('detail-overlay').classList.remove('open'); }
+function closeDetail(e) { if (e.target===document.getElementById('detail-overlay')) closeDetailPanel(); }
+
+/* ── Master popup (read-only) ── */
+function openMasterPopup(m) {
+  if (!m) { alert('查無主檔資料'); return; }
+  document.getElementById('mp-title').textContent = `優惠碼主檔：${m.name}`;
+  document.getElementById('mp-content').innerHTML = `
+    <div class="modal-grid">
+      <div class="modal-field">
+        <label>名稱</label>
+        <input type="text" value="${m.name}" disabled style="background:#f5f7fb;color:#333;" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;">
+        <div class="modal-field">
+          <label>類型</label>
+          <div style="padding:8px 10px;border:1px solid #e4e8f0;border-radius:4px;background:#f5f7fb;">${typeBadge(m.type)}</div>
+        </div>
+        <div class="modal-field">
+          <label>狀態</label>
+          <div style="padding:8px 10px;border:1px solid #e4e8f0;border-radius:4px;background:#f5f7fb;">${masterStatusBadge(m.status)}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;">
+        <div class="modal-field">
+          <label>折扣金額（元）</label>
+          <input type="text" value="-${m.discount.toLocaleString()}" disabled style="background:#f5f7fb;color:#dc2626;font-weight:500;" />
+        </div>
+        <div class="modal-field">
+          <label>效期（天數）</label>
+          <input type="text" value="${m.unlimited ? '永久有效' : m.period + ' 天'}" disabled style="background:#f5f7fb;color:${m.unlimited?'#7c3aed':'#333'};" />
+        </div>
+      </div>
+      <div class="modal-field">
+        <label>說明（客戶端）</label>
+        <textarea disabled style="background:#f5f7fb;color:#333;height:72px;resize:none;">${m.desc}</textarea>
+      </div>
+      <div class="modal-field">
+        <label>備註（內部用）</label>
+        <textarea disabled style="background:#f5f7fb;color:#333;height:56px;resize:none;">${m.notes||''}</textarea>
+      </div>
+      <div class="modal-field">
+        <label>更新時間</label>
+        <input type="text" value="${m.updateDate}" disabled style="background:#f5f7fb;color:#888;" />
+      </div>
+    </div>
+  `;
+  document.getElementById('master-popup').classList.add('open');
+}
+function closeMasterPopup(e) {
+  if (e.target===document.getElementById('master-popup')) document.getElementById('master-popup').classList.remove('open');
+}
+
+/* ── Master render ── */
+function resetMasterSearch() {
+  document.getElementById('m-search-name').value='';
+  document.getElementById('m-search-type').value='';
+  document.getElementById('m-search-status').value='';
+  renderMaster();
+}
+
+function renderMaster() {
+  const nameKw  = document.getElementById('m-search-name').value.trim();
+  const typeKw  = document.getElementById('m-search-type').value;
+  const statusKw= document.getElementById('m-search-status').value;
+
+  let rows = MASTER_DATA.filter(m => {
+    if (nameKw   && !m.name.includes(nameKw)) return false;
+    if (typeKw   && m.type !== typeKw)         return false;
+    if (statusKw && m.status !== statusKw)     return false;
+    return true;
+  });
+
+  document.getElementById('m-count').textContent = `共 ${rows.length} 筆`;
+  document.getElementById('m-tbody').innerHTML = rows.map(m=>`
+    <tr>
+      <td style="font-weight:500;">${m.name}</td>
+      <td>${typeBadge(m.type)}</td>
+      <td>${masterStatusBadge(m.status)}</td>
+      <td class="cp-discount">-${m.discount.toLocaleString()} 元</td>
+      <td style="text-align:center;">${m.unlimited ? '<span style="color:#7c3aed;font-size:12px;">永久有效</span>' : m.period}</td>
+      <td style="font-size:12px;color:#555;">${m.desc}</td>
+      <td style="font-size:12px;color:#888;">${m.updateDate}</td>
+      <td>
+        <button class="act" onclick="openEdit(${m.id})" ${m.status!=='DRAFT'?'disabled style="opacity:.35;cursor:not-allowed;"':''}>編輯</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+/* ── Master actions ── */
+function openEdit(id) {
+  const m = MASTER_DATA.find(x=>x.id===id);
+  document.getElementById('c-name').value    = m.name;
+  document.getElementById('c-type').value    = m.type;
+  document.getElementById('c-discount').value= m.discount;
+  document.getElementById('c-period').value  = m.period||'';
+  document.getElementById('c-unlimited').checked = m.unlimited;
+  document.getElementById('c-desc').value    = m.desc;
+  document.getElementById('c-notes').value   = m.notes;
+  toggleUnlimited();
+  document.querySelector('#create-modal .modal-title').textContent = '編輯優惠碼主檔';
+  pendingActionId = id;
+  document.getElementById('create-modal').classList.add('open');
+}
+
+function saveDraft() {
+  const name = document.getElementById('c-name').value.trim();
+  const type = document.getElementById('c-type').value;
+  const disc = parseInt(document.getElementById('c-discount').value)||0;
+  const unlim= document.getElementById('c-unlimited').checked;
+  const period= unlim ? null : parseInt(document.getElementById('c-period').value)||null;
+  const desc = document.getElementById('c-desc').value.trim();
+  const notes= document.getElementById('c-notes').value.trim();
+  if (!name||!type||!disc||!desc) { alert('請填寫必填欄位（名稱、類型、折扣金額、說明）'); return; }
+  if (!unlim && !period) { alert('請填寫效期天數，或勾選「永久有效」'); return; }
+  const now = new Date().toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(/\//g,'/');
+  if (pendingActionId) {
+    const idx = MASTER_DATA.findIndex(x=>x.id===pendingActionId);
+    MASTER_DATA[idx] = { ...MASTER_DATA[idx], name, type, discount:disc, unlimited:unlim, period, desc, notes, updateDate:now };
+  } else {
+    MASTER_DATA.push({ id: Date.now(), name, type, status:'DRAFT', discount:disc, unlimited:unlim, period, desc, notes, updateDate:now });
+  }
+  closeModal('create-modal');
+  document.querySelector('#create-modal .modal-title').textContent = '新增優惠碼主檔';
+  pendingActionId = null;
+  renderMaster();
+}
+
+function askActivate(id) {
+  pendingActionId = id;
+  const m = MASTER_DATA.find(x=>x.id===id);
+  document.getElementById('activate-name').textContent = m.name;
+  document.getElementById('activate-modal').classList.add('open');
+}
+function confirmActivate() {
+  const idx = MASTER_DATA.findIndex(x=>x.id===pendingActionId);
+  MASTER_DATA[idx].status = 'ACTIVE';
+  MASTER_DATA[idx].updateDate = nowStr();
+  closeModal('activate-modal');
+  renderMaster();
+}
+
+function askSuspend(id) {
+  pendingActionId = id;
+  const m = MASTER_DATA.find(x=>x.id===id);
+  document.getElementById('suspend-name').textContent = m.name;
+  document.getElementById('suspend-modal').classList.add('open');
+}
+function confirmSuspend() {
+  const idx = MASTER_DATA.findIndex(x=>x.id===pendingActionId);
+  MASTER_DATA[idx].status = 'SUSPENDED';
+  MASTER_DATA[idx].updateDate = nowStr();
+  closeModal('suspend-modal');
+  renderMaster();
+}
+
+function nowStr() {
+  return new Date().toLocaleString('zh-TW',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+function toggleUnlimited() {
+  const unlim = document.getElementById('c-unlimited').checked;
+  const periodInput = document.getElementById('c-period');
+  periodInput.disabled = unlim;
+  periodInput.style.background = unlim ? '#f0f4f8' : '';
+  if (unlim) periodInput.value = '';
+}
+
+/* ── Redeem tab ── */
+function onStatusChange() {
+  const status = document.getElementById('demo-status').value;
+  const editable = STATUS_EDITABLE.includes(status);
+  const badge = document.getElementById('demo-status-badge');
+  badge.textContent = STATUS_LABEL[status];
+  badge.className = 'demo-status-badge badge ' + STATUS_BADGE_CLASS[status];
+
+  const hint = document.getElementById('demo-edit-hint');
+  const noHint = document.getElementById('no-edit-hint');
+  if (editable) {
+    hint.textContent = '✓ 可兌換／移除';
+    hint.style.display = '';
+    if (noHint) noHint.remove();
+  } else {
+    hint.textContent = '';
+    hint.style.display = 'none';
+    if (!noHint) {
+      const s = document.createElement('span');
+      s.id = 'no-edit-hint';
+      s.style.cssText = 'font-size:12px;color:#dc2626;margin-left:4px;';
+      s.textContent = '✗ 不可兌換／移除';
+      hint.after(s);
+    }
+  }
+
+  // 整個優惠碼區塊：不可兌換時隱藏
+  document.getElementById('cp-section').style.display = editable ? '' : 'none';
+  // 輸入列控制
+  document.getElementById('cp-input-area').style.display = editable ? '' : 'none';
+  document.getElementById('cp-readonly-label').style.display = editable ? 'none' : '';
+  renderApplied();
+}
+
+function fillCode(code) {
+  const input = document.getElementById('cp-input');
+  if (!input) return;
+  input.value = code;
+  input.focus();
+}
+
+function setMsg(text, type) {
+  const el = document.getElementById('cp-msg');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'cp-msg ' + (type||'');
+}
+
+function redeemCoupon() {
+  const input = document.getElementById('cp-input');
+  const code  = input.value.trim().toUpperCase();
+  setMsg('');
+  if (!code) { setMsg('請輸入優惠碼', 'error'); return; }
+  if (applied.find(c=>c.code===code)) { setMsg('此優惠碼已套用', 'warning'); return; }
+  const data = REDEEM_MOCK[code];
+  if (!data)                              { setMsg('查無有效優惠碼', 'error'); return; }
+  if (data.status==='USED')              { setMsg('此優惠碼已被兌換', 'error'); return; }
+  if (data.status==='DUPLICATE_MASTER') { setMsg('同一張訂單，不可重複兌換同一個優惠碼主檔', 'error'); return; }
+  if (data.status==='BIRTHDAY_MISMATCH'){ setMsg('生日碼限壽星本人使用，買受人身分不符', 'error'); return; }
+  if (data.status==='ERROR')             { setMsg('系統異常，請稍後再試', 'error'); return; }
+  // couponMasterId 重複檢查（一般情境）
+  if (data.couponMasterId && applied.find(c=>c.couponMasterId===data.couponMasterId)) {
+    setMsg('同一張訂單，不可重複兌換同一個優惠碼主檔', 'error'); return;
+  }
+  applied.push({ code, ...data });
+  input.value = '';
+  setMsg('');
+  renderApplied();
+}
+
+function removeApplied(code) {
+  applied = applied.filter(c=>c.code!==code);
+  renderApplied();
+}
+
+function renderApplied() {
+  const tbody = document.getElementById('cp-tbody');
+  const wrap  = document.getElementById('cp-table-wrap');
+  const total = document.getElementById('cp-total');
+  const status = document.getElementById('demo-status').value;
+  const editable = STATUS_EDITABLE.includes(status);
+  wrap.style.display = applied.length ? '' : 'none';
+  tbody.innerHTML = applied.map(c=>`
+    <tr>
+      <td><span class="mono">${c.code}</span></td>
+      <td style="font-size:12px;color:#555;">${c.type==='REFERRAL'?'推薦碼':'生日碼'}</td>
+      <td class="cp-discount">-${c.discount.toLocaleString()} 元</td>
+      <td style="font-size:12px;color:#555;">${c.desc}</td>
+      <td style="font-size:12px;color:#1a3a6b;">${c.sourceOrder||'—'}</td>
+      <td>${editable ? `<button class="cp-remove-btn" onclick="removeApplied('${c.code}')">移除</button>` : ''}</td>
+    </tr>
+  `).join('');
+  const sum = applied.reduce((s,c)=>s+c.discount,0);
+  total.textContent = `-${sum.toLocaleString()} 元`;
+  // 發票金額 = 成交車價(不含配件) + 配件總價 - 折扣總價
+  const closed = 1200000;
+  const accessory = 0;
+  document.getElementById('demo-invoice').textContent = (closed + accessory - sum).toLocaleString() + ' 元';
+}
+
+/* ── Modal helpers ── */
+function openCreateModal() {
+  pendingActionId = null;
+  document.querySelector('#create-modal .modal-title').textContent = '新增優惠碼主檔';
+  ['c-name','c-discount','c-period','c-desc','c-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('c-type').value='';
+  document.getElementById('c-unlimited').checked=false;
+  toggleUnlimited();
+  document.getElementById('create-modal').classList.add('open');
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModalOverlay(id, e) { if (e.target===document.getElementById(id)) closeModal(id); }
+</script>
+</body>
+</html>
