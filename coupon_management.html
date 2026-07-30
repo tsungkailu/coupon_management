@@ -367,7 +367,7 @@ tbody tr:hover td{background:#f7f9fc;}
                   <button class="btn btn-primary" onclick="redeemCoupon()">兌換</button>
                   <span id="cp-msg" class="cp-msg" aria-live="polite"></span>
                 </div>
-                <p class="cp-hint">可在此輸入推薦碼或生日碼。生日碼限壽星本人購車。一個優惠碼只能使用一次</p>
+                <p class="cp-hint">可在此輸入推薦碼或生日碼。生日碼限壽星本人購車。一個優惠碼只能使用一次。</p>
               </div>
               <div class="cp-table-wrap" id="cp-table-wrap" style="display:none;">
                 <div class="cp-readonly-label" id="cp-readonly-label" style="display:none;">已兌換優惠碼</div>
@@ -1117,17 +1117,17 @@ function onStatusChange() {
     if (!noHint) {
       const s = document.createElement('span');
       s.id = 'no-edit-hint';
-      s.style.cssText = 'font-size:12px;color:#dc2626;margin-left:4px;';
+      s.style.cssText = 'font-size:12px;color:#dc2626;';
       s.textContent = '✗ 不可兌換／移除';
       hint.after(s);
     }
   }
 
-  // 整個優惠碼區塊：不可兌換時隱藏
-  document.getElementById('cp-section').style.display = editable ? '' : 'none';
-  // 輸入列控制
+  // 有已兌換資料時，優惠碼區塊保持顯示（僅隱藏輸入列）
+  const hasApplied = applied.length > 0;
+  document.getElementById('cp-section').style.display = (editable || hasApplied) ? '' : 'none';
   document.getElementById('cp-input-area').style.display = editable ? '' : 'none';
-  document.getElementById('cp-readonly-label').style.display = editable ? 'none' : '';
+  document.getElementById('cp-readonly-label').style.display = (!editable && hasApplied) ? '' : 'none';
   renderApplied();
 }
 
@@ -1178,7 +1178,12 @@ function renderApplied() {
   const total = document.getElementById('cp-total');
   const status = document.getElementById('demo-status').value;
   const editable = STATUS_EDITABLE.includes(status);
-  wrap.style.display = applied.length ? '' : 'none';
+  const hasApplied = applied.length > 0;
+
+  wrap.style.display = hasApplied ? '' : 'none';
+  document.getElementById('cp-section').style.display = (editable || hasApplied) ? '' : 'none';
+  document.getElementById('cp-readonly-label').style.display = (!editable && hasApplied) ? '' : 'none';
+
   tbody.innerHTML = applied.map(c=>`
     <tr>
       <td><span class="mono">${c.code}</span></td>
