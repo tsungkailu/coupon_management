@@ -201,9 +201,10 @@ tbody tr:hover td{background:#f7f9fc;}
     <div class="tabs">
       <div class="tab active" id="tab-redeem" onclick="switchTab('redeem')">兌換優惠碼 <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">階段一</span></div>
       <div class="tab" id="tab-report" onclick="switchTab('report')">出售報表下載 <span style="background:#dbeafe;color:#1e40af;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">階段一</span></div>
+      <div class="tab" id="tab-coupon-report" onclick="switchTab('coupon-report')">優惠碼報表匯出 <span style="background:#ede9fe;color:#5b21b6;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">階段二</span></div>
       <!-- 業代隱藏：移除下兩行 -->
-      <div class="tab" id="tab-master" onclick="switchTab('master')">優惠碼主檔 <span style="background:#ede9fe;color:#5b21b6;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">階段二</span></div>
-      <div class="tab" id="tab-query" onclick="switchTab('query')">優惠碼查詢 <span style="background:#ede9fe;color:#5b21b6;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">階段二</span></div>
+      <div class="tab" id="tab-master" style="color:#bbb;cursor:default;">優惠碼主檔 <span style="background:#f1f5f9;color:#94a3b8;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">暫不開發</span></div>
+      <div class="tab" id="tab-query" style="color:#bbb;cursor:default;">優惠碼查詢 <span style="background:#f1f5f9;color:#94a3b8;font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;margin-left:4px;vertical-align:middle;">暫不開發</span></div>
     </div>
 
     <!-- ===== Tab 3（順序四）：優惠碼查詢 ===== -->
@@ -460,6 +461,196 @@ tbody tr:hover td{background:#f7f9fc;}
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== Tab 5：優惠碼報表匯出 ===== -->
+    <div id="pane-coupon-report" style="display:none;">
+      <div style="max-width:960px;">
+
+        <!-- 交車推薦碼排程說明 -->
+        <div style="background:#fff;border:1px solid #dde3ec;border-radius:6px;margin-bottom:14px;overflow:hidden;">
+          <div style="background:#edf0f5;padding:10px 16px;font-size:13px;font-weight:500;color:#1a3a6b;border-bottom:1px solid #dde3ec;display:flex;align-items:center;gap:8px;">
+            <span style="background:#dbeafe;color:#1e40af;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;">推薦碼</span>
+            交車推薦碼排程發送規則
+          </div>
+          <div style="padding:16px 20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-bottom:1px solid #edf0f5;">
+            <div style="padding:0 20px 0 0;border-right:1px solid #edf0f5;">
+              <div style="font-size:11px;color:#888;font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">撈取對象 &amp; 防呆</div>
+              <div style="font-size:13px;color:#333;line-height:1.8;">
+                <div>· 出售訂單 <code style="font-size:12px;background:#f1f5f9;padding:1px 5px;border-radius:3px;">buyerType = NATURAL</code></div>
+                <div>· <code style="font-size:12px;background:#f1f5f9;padding:1px 5px;border-radius:3px;">deliveryDate</code> 落在前一個月</div>
+                <div style="margin-top:6px;padding:8px 10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:4px;font-size:12px;color:#92400e;">
+                  防呆：若已存在同出售單號的優惠碼紀錄，跳過不重複發送
+                </div>
+              </div>
+            </div>
+            <div style="padding:0 20px;border-right:1px solid #edf0f5;">
+              <div style="font-size:11px;color:#888;font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">優惠碼效期</div>
+              <div style="font-size:13px;color:#333;line-height:1.8;">
+                <div>· 起日：發送日當天 00:00</div>
+                <div>· 迄日：發送日 + 180 天</div>
+                <div style="margin-top:6px;font-size:12px;color:#888;">到期後不可兌換</div>
+              </div>
+            </div>
+            <div style="padding:0 0 0 20px;">
+              <div style="font-size:11px;color:#888;font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">排程時間 &amp; 發送記錄</div>
+              <div style="font-size:13px;color:#333;line-height:1.8;">
+                <div>· <strong>每月 15 日 20:00</strong> 批次執行</div>
+                <div>· 透過 PUSH 服務發送 <strong>2 封簡訊</strong></div>
+                <div style="margin-top:6px;padding:8px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;font-size:12px;color:#166534;line-height:1.6;">
+                  發送結果記錄於優惠碼序號：<br>
+                  <code style="font-size:11px;">informedStatus</code>：SUCCESS / FAILED / SKIPPED（無手機）<br>
+                  <code style="font-size:11px;">informedDate</code>：實際發送時間
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 生日碼排程說明 -->
+        <div style="background:#fff;border:1px solid #dde3ec;border-radius:6px;margin-bottom:14px;overflow:hidden;">
+          <div style="background:#edf0f5;padding:10px 16px;font-size:13px;font-weight:500;color:#1a3a6b;border-bottom:1px solid #dde3ec;display:flex;align-items:center;gap:8px;">
+            <span style="background:#ede9fe;color:#5b21b6;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;">生日碼</span>
+            生日碼排程發送規則
+          </div>
+          <div style="padding:16px 20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;">
+            <div style="padding:0 20px 0 0;border-right:1px solid #edf0f5;">
+              <div style="font-size:11px;color:#888;font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">撈取對象 &amp; 防呆</div>
+              <div style="font-size:13px;color:#333;line-height:1.8;">
+                <div>· <code style="font-size:12px;background:#f1f5f9;padding:1px 5px;border-radius:3px;">isBuyer = 1</code> 自然人保有客戶</div>
+                <div>· <code style="font-size:12px;background:#f1f5f9;padding:1px 5px;border-radius:3px;">dob</code> 月日落在今天起算 0～30 天內</div>
+                <div style="margin-top:6px;padding:8px 10px;background:#fffbeb;border:1px solid #fcd34d;border-radius:4px;font-size:12px;color:#92400e;">
+                  防呆：同客戶證號 + 同優惠碼主檔，且 <code style="font-size:11px;">validStartDate</code> 在當天前後 30 日內，跳過不重複發送
+                </div>
+              </div>
+            </div>
+            <div style="padding:0 20px;border-right:1px solid #edf0f5;">
+              <div style="font-size:11px;color:#888;font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">優惠碼效期</div>
+              <div style="font-size:13px;color:#333;line-height:1.8;">
+                <div>· 起日：發送日當天 00:00</div>
+                <div>· 迄日：發送日 + 40 天</div>
+                <div style="margin-top:6px;font-size:12px;color:#888;">需在生日當月內使用</div>
+              </div>
+            </div>
+            <div style="padding:0 0 0 20px;">
+              <div style="font-size:11px;color:#888;font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">排程時間 &amp; 發送記錄</div>
+              <div style="font-size:13px;color:#333;line-height:1.8;">
+                <div>· <strong>每天 21:00</strong> 執行</div>
+                <div>· 透過 PUSH 服務發送 <strong>1 封簡訊</strong></div>
+                <div style="margin-top:6px;padding:8px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;font-size:12px;color:#166534;line-height:1.6;">
+                  發送結果記錄於優惠碼序號：<br>
+                  <code style="font-size:11px;">informedStatus</code>：SUCCESS / FAILED / SKIPPED（無手機）<br>
+                  <code style="font-size:11px;">informedDate</code>：實際發送時間
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 匯出區塊 -->
+        <div style="background:#fff;border:1px solid #dde3ec;border-radius:6px;padding:20px 24px;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:500;color:#1a3a6b;margin-bottom:6px;">優惠碼發送報表</div>
+          <div style="font-size:13px;color:#666;margin-bottom:16px;">匯出所有優惠碼序號的發送紀錄，包含推薦碼及生日碼，依建立時間篩選。每月 5 日 07:00 自動寄送上個月報表至指定信箱。</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="btn btn-primary" onclick="showToast('報表下載中…')">⬇ 下載 Excel 報表</button>
+            <span style="font-size:12px;color:#888;">格式：.xlsx　資料：模擬假資料</span>
+          </div>
+        </div>
+
+        <!-- 報表欄位預覽 -->
+        <div style="background:#fff;border:1px solid #dde3ec;border-radius:6px;overflow:hidden;">
+          <div style="background:#edf0f5;padding:10px 16px;font-size:13px;font-weight:500;color:#1a3a6b;border-bottom:1px solid #dde3ec;">報表欄位預覽</div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead>
+                <tr style="background:#f5f7fb;">
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">優惠碼</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">優惠碼類型</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">優惠碼名稱</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">折抵金額</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">有效期間-起日</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">有效期間-迄日</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">來源出售單號</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">來源客戶證號</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">使用出售單號</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">使用時間</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">補充資訊</th>
+                  <th style="padding:8px 12px;text-align:left;color:#1e40af;font-weight:600;border-bottom:1px solid #dde3ec;white-space:nowrap;">通知客戶狀態</th>
+                  <th style="padding:8px 12px;text-align:left;color:#1e40af;font-weight:600;border-bottom:1px solid #dde3ec;white-space:nowrap;">通知客戶時間</th>
+                  <th style="padding:8px 12px;text-align:left;color:#555;font-weight:500;border-bottom:1px solid #dde3ec;white-space:nowrap;">建立時間</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;font-family:monospace;">NTUXEC</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">推薦碼</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">交車推薦碼</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">8,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/15</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2027/02/11</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;font-family:monospace;">P2026080001</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">A123456789</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;font-family:monospace;">P2026090012</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/09/03</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;color:#166534;font-weight:500;">SUCCESS</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/15</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/15</td>
+                </tr>
+                <tr style="background:#fafbfc;">
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;font-family:monospace;">KPTVEX</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">生日碼</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">生日禮物碼</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">10,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/16</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/09/25</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">B234567890</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;color:#166534;font-weight:500;">SUCCESS</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/16</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/16</td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;font-family:monospace;">GDEXCR</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">推薦碼</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">交車推薦碼</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">8,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/15</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2027/02/11</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;font-family:monospace;">P2026080005</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">C345678901</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;color:#dc2626;font-weight:500;">SKIPPED</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/15</td>
+                </tr>
+                <tr style="background:#fafbfc;">
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;font-family:monospace;">AYXTEX</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">推薦碼</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">交車推薦碼</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">8,000</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/15</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2027/02/11</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;font-family:monospace;">P2026080009</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">D456789012</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">—</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;color:#d97706;font-weight:500;">FAILED</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/15</td>
+                  <td style="padding:8px 12px;border-top:1px solid #edf0f5;white-space:nowrap;">2026/08/15</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -753,9 +944,13 @@ let applied = [];
 
 /* ── Tab ── */
 function switchTab(tab) {
-  ['query','master','redeem','report'].forEach(t => {
-    document.getElementById('pane-'+t).style.display = t===tab ? '' : 'none';
-    document.getElementById('tab-'+t).className = 'tab' + (t===tab ? ' active' : '');
+  ['query','master','redeem','report','coupon-report'].forEach(t => {
+    const pane = document.getElementById('pane-'+t);
+    const tabEl = document.getElementById('tab-'+t);
+    if (pane) pane.style.display = t===tab ? '' : 'none';
+    if (tabEl && t !== 'master' && t !== 'query') {
+      tabEl.className = 'tab' + (t===tab ? ' active' : '');
+    }
   });
   if (tab==='master') renderMaster();
 }
